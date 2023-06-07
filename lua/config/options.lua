@@ -54,8 +54,8 @@ opt.wrap = false -- Disable line wrap
 opt.foldenable = true
 opt.foldlevel = 99
 opt.foldlevelstart = 99
-opt.foldmethod = "syntax"
-opt.foldcolumn = "auto:9"
+opt.foldmethod = "manual"
+opt.foldcolumn = "0"
 
 if vim.fn.has("nvim-0.9.0") == 1 then
   opt.splitkeep = "screen"

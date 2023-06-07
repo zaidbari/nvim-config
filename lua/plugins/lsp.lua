@@ -5,6 +5,7 @@ return {
     dependencies = {
       { "folke/neoconf.nvim", cmd = "Neoconf", config = true },
       { "folke/neodev.nvim", opts = {} },
+      { "jose-elias-alvarez/typescript.nvim" },
       "mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       {
@@ -56,6 +57,33 @@ return {
       ---@type lspconfig.options
       servers = {
         jsonls = {},
+        eslint = {
+          settings = {
+            -- helps eslint find the eslintrc when it's placed in a subfolder instead of the cwd root
+            workingDirectory = { mode = "auto" },
+          },
+        },
+        tsserver = {
+          settings = {
+            typescript = {
+              format = {
+                indentSize = vim.o.shiftwidth,
+                convertTabsToSpaces = vim.o.expandtab,
+                tabSize = vim.o.tabstop,
+              },
+            },
+            javascript = {
+              format = {
+                indentSize = vim.o.shiftwidth,
+                convertTabsToSpaces = vim.o.expandtab,
+                tabSize = vim.o.tabstop,
+              },
+            },
+            completions = {
+              completeFunctionCalls = true,
+            },
+          },
+        },
         lua_ls = {
           -- mason = false, -- set to false if you don't want this server to be installed with mason
           settings = {
@@ -75,11 +103,64 @@ return {
       ---@type table<string, fun(server:string, opts:_.lspconfig.options):boolean?>
       setup = {
         -- example to setup with typescript.nvim
+        eslint = function()
+          require("lazyvim.util").on_attach(function(client)
+            if client.name == "eslint" then
+              client.server_capabilities.documentFormattingProvider = true
+            elseif client.name == "tsserver" then
+              client.server_capabilities.documentFormattingProvider = false
+            end
+          end)
+
+          vim.api.nvim_create_autocmd("BufWritePre", {
+            callback = function(event)
+              local client = vim.lsp.get_active_clients({ bufnr = event.buf, name = "eslint" })[1]
+              if client then
+                local diag = vim.diagnostic.get(event.buf, { namespace = vim.lsp.diagnostic.get_namespace(client.id) })
+                if #diag > 0 then
+                  vim.cmd("EslintFixAll")
+                end
+              end
+            end,
+          })
+        end,
         tsserver = function(_, opts)
+          require("lazyvim.util").on_attach(function(client, buffer)
+            if client.name == "tsserver" then
+              -- import all missing imports
+              vim.keymap.set(
+                "n",
+                "<leader>mi",
+                "<cmd>TypescriptAddMissingImports<CR>",
+                { buffer = buffer, desc = "Import All" }
+              )
+              vim.keymap.set(
+                "n",
+                "<leader>mr",
+                "<cmd>TypescriptRemoveUnused<CR>",
+                { buffer = buffer, desc = "Remove Unused" }
+              )
+
+              vim.keymap.set("n", "<leader>ma", "<cmd>TypescriptFixAll<CR>", { buffer = buffer, desc = "Fix All" })
+
+              vim.keymap.set(
+                "n",
+                "<leader>mo",
+                "<cmd>TypescriptOrganizeImports<CR>",
+                { buffer = buffer, desc = "Organize Imports" }
+              )
+
+              vim.keymap.set(
+                "n",
+                "<leader>mR",
+                "<cmd>TypescriptRenameFile<CR>",
+                { desc = "Rename File", buffer = buffer }
+              )
+            end
+          end)
           require("typescript").setup({ server = opts })
           return true
-        end,
-        -- Specify * to use this function as a fallback for any server
+        end, -- Specify * to use this function as a fallback for any server
         ["*"] = function(server, opts) end,
       },
     },

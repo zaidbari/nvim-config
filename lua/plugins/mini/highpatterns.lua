@@ -13,7 +13,7 @@ return {
           ft = { "typescriptreact", "javascriptreact", "css", "javascript", "typescript", "html" },
           -- full: the whole css class will be highlighted
           -- compact: only the color will be highlighted
-          style = "full",
+          style = "compact",
         },
         highlighters = {
           hex_color = hi.gen_highlighter.hex_color({ priority = 2000 }),
@@ -26,7 +26,7 @@ return {
         opts.tailwind = {
           enabled = true,
           ft = { "typescriptreact", "javascriptreact", "css", "javascript", "typescript", "html" },
-          style = "full",
+          style = "compact",
         }
       end
       if type(opts.tailwind) == "table" and opts.tailwind.enabled then
